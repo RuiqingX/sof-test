@@ -112,6 +112,8 @@ def do_wave_analysis():
         analyze_wav_smart_amp(wave, fs_wav)
     if cmd.analyze == 'wov':
         analyze_wav_wov(wave, fs_wav)
+    if cmd.analyze == 'thdn':
+        analyze_wav_thdn(wave, fs_wav)
 
 # remove digital zeros in two sides
 def trim_wave(wave):
@@ -205,6 +207,19 @@ def analyze_wav_wov(wave, fs):
         sys.exit(1002)
     print('wave analysis result: PASSED')
 
+def analyze_wav_thdn(wave, fs_wav):
+    # Drop the ramp up data in unstable state
+    time_skip = 0.25
+    samples_skip = int(fs_wav * 0.5)
+    wave = normalize(wave[samples_skip:])
+    thdn = calc_thdn(wave, fs_wav, cmd.freq[0])
+    result = thdn < cmd.threshold
+    print('THD+N of specified wave is %s dB' % thdn)
+    if not np.all(result):
+        print('THD+N too high, wave analysis result: FAILED')
+        sys.exit(1003)
+    print('wave analysis result: PASSED')
+
 def calc_thdn(wave, fs, freq):
     """
     This function calculates Total Harmonic Distortion plus Noise (THD+N) of a wave.
@@ -223,7 +238,7 @@ def calc_thdn(wave, fs, freq):
     time_skip = 0.02
     samples_skip = int(time_skip * fs)
     filtered = stdnotch(wave, freq, fs)
-    filtered_cut = filtered[samples_skip:,:]
+    filtered_cut = filtered[samples_skip:,:] if len(wave.shape) > 2 else filtered[samples_skip:]
     return 10 * np.log10(np.mean(np.power(filtered_cut, 2), axis=0))
 
 def parse_cmdline():
@@ -242,7 +257,7 @@ def parse_cmdline():
     help='sample bits of generated wave')
     parser.add_argument('-o', '--output', type=str, help='path to store generated files', default='.')
     # wave comparison arguments
-    parser.add_argument('-a', '--analyze', type=str, choices=['smart_amp', 'wov'], help='analyze recorded wave to give case verdict')
+    parser.add_argument('-a', '--analyze', type=str, choices=['smart_amp', 'wov', 'thdn'], help='analyze recorded wave to give case verdict')
     parser.add_argument('-R', '--recorded_wave', type=str, help='path of recorded wave')
     parser.add_argument('-Z', '--zero_threshold', type=float, default=-50.3, help='zero threshold in dBFS')
     parser.add_argument('-H', '--hb_time', type=float, default=2.1, help='history buffer size')
