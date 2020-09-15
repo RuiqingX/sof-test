@@ -16,6 +16,7 @@
 ##
 
 # remove the existing alsabat wav files
+set -e
 rm -f /tmp/bat.wav.*
 
 source $(dirname ${BASH_SOURCE[0]})/../case-lib/lib.sh
