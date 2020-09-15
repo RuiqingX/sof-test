@@ -1,7 +1,6 @@
 #!/bin/bash
 
 ##
-## Case Name: check-xrun-injection
 ## Preconditions:
 ##    Need to enable CONFIG_SND_PCM_XRUN_DEBUG in kenrel config
 ## Description:
